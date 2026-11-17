@@ -1,0 +1,11 @@
+icon,seed,pick,auto_adopted,review_reason,bg,bg_seconds
+face_skull,2,siglip,True,,birefnet-general,28.70082649998949
+face_flame,2,siglip,False,"최고 p_correct=0.016, 10지선다 정답 0/4장",birefnet-general,17.450016899994807
+face_shield,0,siglip,True,,birefnet-general,16.48430740000913
+face_heal,1,siglip,True,,birefnet-general,16.32157480000751
+skill_cleave,1,siglip,False,"최고 p_correct=0.257, 10지선다 정답 0/4장",birefnet-general,16.346968799975002
+skill_fireball,0,siglip,True,,birefnet-general,16.41556620001211
+skill_stab,2,siglip,True,,birefnet-general,16.298666099988623
+skill_taunt,3,siglip,False,"최고 p_correct=0.219, 10지선다 정답 0/4장",birefnet-general,16.388437299989164
+skill_bless,2,siglip,True,,birefnet-general,16.378154900012305
+skill_aim,0,siglip,False,"최고 p_correct=0.163, 10지선다 정답 0/4장",birefnet-general,16.373405899998033

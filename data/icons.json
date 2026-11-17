@@ -1,0 +1,65 @@
+{
+  "note": "게임에서 아직 그림 없이 글자로 표시되던 아이콘 10개. label은 SigLIP 2 한국어 10지선다(알아볼 수 있는가)에 쓰는 짧은 이름. 생성 프롬프트는 비공개(data/prompts.private.json, 저장소에 없음).",
+  "icons": [
+    {
+      "id": "face_skull",
+      "group": "특수 면",
+      "name": "해골",
+      "label": "해골"
+    },
+    {
+      "id": "face_flame",
+      "group": "특수 면",
+      "name": "불꽃",
+      "label": "불꽃"
+    },
+    {
+      "id": "face_shield",
+      "group": "특수 면",
+      "name": "방패",
+      "label": "방패"
+    },
+    {
+      "id": "face_heal",
+      "group": "특수 면",
+      "name": "회복",
+      "label": "붉은 물약"
+    },
+    {
+      "id": "skill_cleave",
+      "group": "기술 칸 · 전사",
+      "name": "내려치기",
+      "label": "대검"
+    },
+    {
+      "id": "skill_fireball",
+      "group": "기술 칸 · 마법사",
+      "name": "화염구",
+      "label": "불덩이"
+    },
+    {
+      "id": "skill_stab",
+      "group": "기술 칸 · 도적",
+      "name": "급소",
+      "label": "단검"
+    },
+    {
+      "id": "skill_taunt",
+      "group": "기술 칸 · 동료 A",
+      "name": "도발",
+      "label": "투구"
+    },
+    {
+      "id": "skill_bless",
+      "group": "기술 칸 · 동료 B",
+      "name": "축복",
+      "label": "성표 목걸이"
+    },
+    {
+      "id": "skill_aim",
+      "group": "기술 칸 · 동료 C",
+      "name": "조준 사격",
+      "label": "과녁에 꽂힌 화살"
+    }
+  ]
+}

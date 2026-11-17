@@ -1,0 +1,21 @@
+candidate,icon,seed,auto_adopted,human_usable,human_note,siglip_correct,p_correct,style_cos,style_ge_baseline_min
+sdxl,face_skull,1,True,True,,True,0.9973747730255127,0.7527635097503662,False
+sdxl,face_flame,2,False,False,불길 대신 괴물이 그려짐 + 연기 때문에 배경 제거가 네모로 남음,False,0.13618595898151398,0.7681457996368408,False
+sdxl,face_shield,1,True,True,,True,0.9979116320610046,0.8649014234542847,True
+sdxl,face_heal,0,True,True,,True,0.9940890073776245,0.7986007928848267,False
+sdxl,skill_cleave,2,False,False,아이콘이 아니라 전사 전신이 그려짐,True,0.4848898947238922,0.7822763919830322,False
+sdxl,skill_fireball,1,True,True,,True,0.967047393321991,0.7793401479721069,False
+sdxl,skill_stab,2,True,True,,True,0.953463077545166,0.8903173208236694,True
+sdxl,skill_taunt,3,False,True,투구는 분명함. SigLIP은 '방패'로 오판,False,0.18457099795341492,0.7332746982574463,False
+sdxl,skill_bless,2,True,True,,True,0.9864365458488464,0.8123883605003357,True
+sdxl,skill_aim,2,True,True,,True,0.9917933344841003,0.7746641039848328,False
+sdxl_ipa,face_skull,2,True,True,,True,0.9961994290351868,0.805212140083313,False
+sdxl_ipa,face_flame,2,False,False,불길 대신 괴물,False,0.015691913664340973,0.7582968473434448,False
+sdxl_ipa,face_shield,0,True,True,,True,0.9977108240127563,0.8824445009231567,True
+sdxl_ipa,face_heal,1,True,True,병 모양이 뭉개졌지만 물약으로 읽힘,True,0.9737939834594727,0.7869065999984741,False
+sdxl_ipa,skill_cleave,1,False,False,전사 전신,False,0.2573311924934387,0.8014614582061768,False
+sdxl_ipa,skill_fireball,0,True,False,불꽃이 사라진 붉은 공. SigLIP은 정답으로 봄(오판),True,0.9682844877243042,0.8255161046981812,True
+sdxl_ipa,skill_stab,2,True,True,,True,0.9684576988220215,0.9113572835922241,True
+sdxl_ipa,skill_taunt,3,False,True,투구,False,0.21942771971225739,0.8191399574279785,True
+sdxl_ipa,skill_bless,2,True,True,,True,0.9785373210906982,0.8031601309776306,False
+sdxl_ipa,skill_aim,0,False,True,과녁과 화살이 작지만 읽힘,False,0.1627197265625,0.8667191863059998,True
