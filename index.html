@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>게임 그림 AI PoC 결과</title>
+<meta name="description" content="AIFFEL 메인퀘스트 2: 게임 그림 작업에 로컬 AI 넣기 — 배경 제거 품질 검사와 아이콘 생성 PoC 결과">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #131116;
+  --panel: #1c1920;
+  --panel-2: #24202a;
+  --line: #34303b;
+  --text: #ece8ef;
+  --muted: #a39dab;
+  --accent: #d9a35b;
+  --good: #7ccf8a;
+  --bad: #ef7a6c;
+  --warn: #e8b85c;
+  --info: #7fa8e8;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.65 "Noto Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+header.hero { padding: 56px 0 28px; border-bottom: 1px solid var(--line); }
+.eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .02em; font-size: 14px; }
+h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.25; margin: 8px 0 12px; }
+h2 { font-size: clamp(22px, 3.4vw, 28px); margin: 0 0 6px; }
+h3 { font-size: 18px; margin: 0 0 8px; }
+.lead { color: var(--muted); max-width: 720px; margin: 0; }
+.notice { margin-top: 18px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--muted); font-size: 14px; }
+section { padding: 44px 0; border-bottom: 1px solid var(--line); }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.stat b { display: block; font-size: 30px; line-height: 1.1; color: var(--accent); }
+.stat span { color: var(--muted); font-size: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.tag.go { background: rgba(124,207,138,.15); color: var(--good); }
+.tag.hold { background: rgba(232,184,92,.15); color: var(--warn); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 13px; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pass { color: var(--good); font-weight: 700; }
+.fail { color: var(--bad); font-weight: 700; }
+.part { color: var(--warn); font-weight: 700; }
+.scroll { overflow-x: auto; }
+figure { margin: 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 10px; border: 1px solid var(--line); background: #000; }
+figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+/* 임계값 데모 */
+.demo { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.ctrl { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ctrl label { font-weight: 700; }
+.ctrl output { font-size: 28px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 64px; }
+input[type=range] { flex: 1; min-width: 200px; accent-color: var(--accent); height: 28px; }
+.readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+.readout div { background: var(--panel-2); border-radius: 10px; padding: 12px; }
+.readout b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+.readout span { color: var(--muted); font-size: 13px; }
+.plot { position: relative; height: 210px; margin-top: 8px; }
+.plot svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-top: 10px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.hint { color: var(--muted); font-size: 14px; margin-top: 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.chip.flag { color: var(--text); border-color: var(--accent); }
+.chip.flag.def { background: rgba(239,122,108,.18); border-color: var(--bad); }
+
+.bars .row { display: grid; grid-template-columns: 150px 1fr 56px; gap: 10px; align-items: center; margin: 8px 0; font-size: 14px; }
+.bars .track { background: var(--panel-2); border-radius: 6px; height: 14px; position: relative; overflow: hidden; }
+.bars .fill { height: 100%; background: var(--info); border-radius: 6px; }
+.bars .fill.best { background: var(--accent); }
+.bars .goal { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--good); }
+footer { padding: 32px 0 56px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 760px) {
+  .stats, .readout { grid-template-columns: repeat(2, 1fr); }
+  .grid2 { grid-template-columns: 1fr; }
+  .bars .row { grid-template-columns: 96px 1fr 48px; }
+  header.hero { padding-top: 36px; }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">AIFFEL 메인퀘스트 2 · 내 도메인에서 AI로 개선 지점 찾기</div>
+    <h1>게임 그림 작업에 로컬 AI 넣기</h1>
+    <p class="lead">혼자 만드는 출시 예정 다크 판타지 게임의 그림 작업에서 병목 두 곳에 AI를 넣고, 미리 정한 기준으로 도입 여부를 판단했습니다. 모든 모델은 노트북 GPU에서 돌렸고 그림을 외부로 보내지 않았습니다.</p>
+    <div class="stats">
+      <div class="stat"><b>10 / 31</b><span>AI가 찾아낸 기존 배경 제거 결함</span></div>
+      <div class="stat"><b>16 / 31</b><span>결함을 모두 잡으면서 사람이 볼 그림</span></div>
+      <div class="stat"><b>8 / 10</b><span>게임에 쓸 수 있는 생성 아이콘</span></div>
+      <div class="stat"><b>0</b><span>같은 시드로 다시 만든 그림의 픽셀 차이</span></div>
+    </div>
+    <div class="notice">출시 전 게임이라 게임 제목, 기획 내용, 생성 프롬프트, 원본 그림은 공개하지 않습니다. 그림은 작게 줄인 미리보기이고 이름은 <code>boss_01</code>처럼 바꿨습니다. 그림을 다른 용도로 쓰지 말아 주세요.</div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>결론</h2>
+    <p class="sub">PoC의 목적은 완성품이 아니라 "도입할지 판단"입니다.</p>
+    <div class="grid2">
+      <div class="card">
+        <span class="tag go">도입</span>
+        <h3 style="margin-top:10px">A. 배경 제거 + 품질 검사</h3>
+        <p style="margin:0;color:var(--muted)">레슨 유형: <b style="color:var(--text)">검사·판독</b>. 게임에 이미 들어간 배경 제거 그림 31장을 BiRefNet 결과와 견줘 결함 10장을 찾았고, 9장은 AI로 바로 교체할 수 있었습니다.</p>
+      </div>
+      <div class="card">
+        <span class="tag hold">보류</span>
+        <h3 style="margin-top:10px">B. 아이콘 생성</h3>
+        <p style="margin:0;color:var(--muted)">레슨 유형 밖의 <b style="color:var(--text)">생성</b>. SDXL로 알아볼 수 있는 아이콘 8개를 만들었지만, 화풍이 게임 그림만큼 맞지 않았습니다. 생성은 지금처럼 하고, 배경 제거와 검사만 바꿉니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="threshold">
+  <div class="wrap">
+    <h2>직접 움직여 보기: 품질 검사기의 임계값</h2>
+    <p class="sub">게임 배경 제거본과 AI 결과의 겹침(IoU)이 임계값보다 낮으면 "검토 필요"로 표시합니다. 임계값을 올리면 결함을 더 잡지만 사람이 볼 그림도 늘어납니다. 레슨 예시 1의 임계값 구간과 같은 생각입니다.</p>
+    <div class="demo">
+      <div class="ctrl">
+        <label for="th">임계값</label>
+        <input id="th" type="range" min="0.80" max="0.98" step="0.01" value="0.93" aria-describedby="thHint">
+        <output id="thOut" for="th">0.93</output>
+      </div>
+      <div class="readout" aria-live="polite">
+        <div><b id="rFlag">–</b><span>검토 필요로 표시 (31장 중)</span></div>
+        <div><b id="rCaught">–</b><span>잡은 결함 (10장 중)</span></div>
+        <div><b id="rFalse">–</b><span>결함 아닌데 표시</span></div>
+        <div><b id="rPrec">–</b><span>정밀도</span></div>
+      </div>
+      <div class="plot"><svg id="plot" role="img" aria-label="그림 31장의 IoU와 임계값"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--bad)"></i>결함 (사람 판정)</span>
+        <span><i style="background:var(--warn)"></i>경미 (발밑 그림자 등)</span>
+        <span><i style="background:#8b8494"></i>결함 없음</span>
+        <span><i style="background:var(--accent);height:3px;vertical-align:3px"></i>임계값</span>
+      </div>
+      <div class="chips" id="chips"></div>
+      <p class="hint" id="thHint">0.93에서 결함 10장을 모두 잡고 31장 중 16장만 보면 됩니다. 결함이 아닌데 표시된 그림도 대부분 발밑 그림자 같은 "경미" 판정이라 한 번 볼 만합니다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>A. 정답이라고 생각한 자료에 결함이 있었다</h2>
+    <p class="sub">처음엔 게임 배경 제거본을 정답으로 놓고 AI를 채점했는데, 모든 방법이 같은 그림에서 함께 낮은 점수를 받았습니다. 확인해 보니 정답 쪽이 틀려 있었습니다.</p>
+    <div class="grid2">
+      <figure>
+        <img src="outputs/public/bg_defect_examples.png" alt="원본, 게임 배경 제거본, AI 배경 제거본을 나란히 놓은 결함 사례 4장" loading="lazy">
+        <figcaption>원본 | 게임 배경 제거본(분홍 = 투명) | AI. 배경 얼룩, 활시위 안쪽 배경, 몸 둘레 테두리가 남아 있습니다.</figcaption>
+      </figure>
+      <figure>
+        <img src="outputs/public/bg_before_after.png" alt="결함이 있던 9장을 지금 게임 버전과 AI 교체본으로 비교" loading="lazy">
+        <figcaption>지금 게임에 들어간 것 | AI 교체본 (9장). 남은 1장(boss_01)은 AI가 마법 불꽃까지 지워서 사람이 손보기로 했습니다. 이 불꽃은 나중에 스토어 표지의 핵심 장면이 됐습니다.</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="margin-top:32px">배경 제거 방법 비교 (결함 없는 21장, IoU 평균)</h3>
+    <div class="bars" id="bars"></div>
+    <p class="hint">초록 선은 목표 0.95입니다. AI 세 모델 모두 색 지우기 기준선보다 확실히 낫지만 목표에는 못 미쳤습니다. 차이는 주로 발밑 그림자(남길지 정하지 않은 설계 선택), 빛·연기 효과, 머리카락 같은 가는 경계에서 났습니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>B. 로컬에서 만든 아이콘</h2>
+    <p class="sub">SDXL로 아이콘마다 시드 4장을 만들고, SigLIP 2가 한국어 이름 10개 중 정답을 고를 확신이 0.5 이상이면 자동 채택, 아래면 사람 검토로 넘겼습니다. 그 뒤 BiRefNet으로 배경을 지웠습니다.</p>
+    <figure>
+      <img src="outputs/public/icons_final_sdxl.png" alt="SDXL로 만든 최종 아이콘 10개를 게임 칸 위에 올린 모습" loading="lazy">
+      <figcaption>게임 칸 위에 올린 최종 아이콘. 주황색 "검토"는 자동 채택하지 않고 사람에게 넘긴 것입니다.</figcaption>
+    </figure>
+    <div class="scroll" style="margin-top:20px">
+      <table>
+        <thead><tr><th>아이콘</th><th>SigLIP 확신</th><th>자동 채택</th><th>사람 판정</th><th>메모</th></tr></thead>
+        <tbody id="iconRows"></tbody>
+      </table>
+    </div>
+    <p class="hint">자동 채택한 7개는 모두 실제로 쓸 수 있었고, 검토로 넘긴 3개 중 2개는 실제 불량이었습니다. 불꽃은 비유 표현("불길의 혀") 때문에 괴물이 나왔고, 내려치기는 동작을 요청해서 전사 전신이 나왔습니다. 프롬프트가 SDXL 한도(77토큰)를 넘어 뒷부분이 잘린 것도 실패 원인입니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>성공 기준 (실험 전에 고정)</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>기준</th><th>목표</th><th>결과</th><th>판정</th></tr></thead>
+        <tbody>
+          <tr><td>①</td><td>배경 제거 IoU (결함 없는 그림)</td><td class="num">0.95</td><td class="num">0.942 (기준선 0.875)</td><td class="fail">미달</td></tr>
+          <tr><td>②</td><td>알아볼 수 있는 아이콘</td><td class="num">8 / 10</td><td class="num">8 / 10</td><td class="pass">통과</td></tr>
+          <tr><td>③</td><td>화풍이 기존 그림만큼 비슷함</td><td class="num">10 / 10</td><td class="num">3 / 10</td><td class="fail">미달</td></tr>
+          <tr><td>④</td><td>자동 채택 아이콘의 사람 조작</td><td class="num">0회</td><td class="num">7개 0회, 3개 검토</td><td class="part">부분</td></tr>
+          <tr><td>⑤</td><td>아이콘 1개 기계 시간</td><td class="num">3분 이하</td><td class="num">약 1분 45초</td><td class="pass">통과</td></tr>
+          <tr><td>⑥</td><td>재현성 (같은 시드)</td><td class="num">픽셀 차이 0</td><td class="num">0</td><td class="pass">통과</td></tr>
+          <tr><td>추가</td><td>품질 검사기 결함 재현율</td><td class="num">100%</td><td class="num">100% (16 / 31장 검토)</td><td class="pass">통과</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:28px">기존 방식(ChatGPT)과 비교</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>지금 방식: ChatGPT</th><th>PoC: 로컬 SDXL 파이프라인</th></tr></thead>
+        <tbody>
+          <tr><td>한 장이 바로 나올 때</td><td>사람이 붙어서 1분 이내</td><td>기계 약 1분 45초, 사람 0분</td></tr>
+          <tr><td>실패했을 때</td><td>프롬프트 고쳐 약 5분</td><td>자동으로 검토로 넘어옴, 고치는 건 같음</td></tr>
+          <tr><td>다시 만들기</td><td>불가능</td><td>픽셀까지 같은 그림</td></tr>
+          <tr><td>화풍</td><td>잘 맞음</td><td>덜 맞음</td></tr>
+          <tr><td>그림이 외부로 나감</td><td>나감</td><td>안 나감</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>쓴 모델과 고른 이유</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>모델</th><th>역할</th><th>라이선스 (2026-11-17 확인)</th></tr></thead>
+        <tbody>
+          <tr><td>BiRefNet</td><td>배경 제거 (U²-Net, IS-Net, 색 지우기와 비교해 1위)</td><td>MIT</td></tr>
+          <tr><td>SDXL base 1.0</td><td>아이콘 생성 (IP-Adapter 화풍 참조 버전보다 알아보기 쉬움)</td><td>OpenRAIL++-M</td></tr>
+          <tr><td>SigLIP 2</td><td>"무엇으로 보이는가" 한국어 10지선다, 화풍 유사도</td><td>Apache-2.0</td></tr>
+          <tr><td style="color:var(--muted)">FLUX.1-dev, SDXL-Turbo</td><td style="color:var(--muted)">점수를 재기 전에 탈락</td><td class="fail">비상업 라이선스</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>코드, 문서, 측정 결과 CSV: <a href="https://github.com/kwkworks/mainquest2-game-art-poc">github.com/kwkworks/mainquest2-game-art-poc</a></p>
+    <p>문서: <a href="https://github.com/kwkworks/mainquest2-game-art-poc/blob/main/docs/01_problem_definition.md">문제 정의서</a> · <a href="https://github.com/kwkworks/mainquest2-game-art-poc/blob/main/docs/02_model_selection.md">모델 선정</a> · <a href="https://github.com/kwkworks/mainquest2-game-art-poc/blob/main/docs/03_evaluation.md">검증 결과</a></p>
+    <p>이 페이지는 측정 결과를 보여 주는 정적 페이지입니다. 모델은 브라우저에서 실행되지 않습니다.</p>
+  </div>
+</footer>
+
+<script>
+// 그림 31장: [공개용 이름, 게임 배경 제거본과 AI 결과의 IoU, 사람 판정]  (outputs/qa/qa_scores.csv)
+const QA = [["weapon_07",0.3049,"d"],["weapon_05",0.5705,"d"],["weapon_02",0.6065,"d"],["boss_01",0.6618,"d"],["ally_02",0.68,"d"],["boss_03",0.7943,"d"],["enemy_02",0.8022,"m"],["elite_02",0.8926,"d"],["weapon_04",0.8959,"n"],["boss_02",0.8982,"d"],["enemy_05",0.8997,"m"],["elite_01",0.9004,"m"],["enemy_03",0.9162,"d"],["weapon_08",0.9211,"d"],["player_05",0.9228,"m"],["ally_03",0.9285,"n"],["player_01",0.9405,"n"],["enemy_04",0.9434,"n"],["weapon_01",0.9511,"n"],["enemy_01",0.9551,"n"],["ally_01",0.9564,"n"],["player_10",0.9565,"m"],["player_04",0.958,"m"],["player_03",0.9581,"m"],["player_09",0.9596,"m"],["player_06",0.9628,"n"],["player_07",0.9718,"n"],["weapon_06",0.9738,"n"],["player_08",0.9779,"n"],["player_02",0.9787,"n"],["weapon_03",0.9856,"n"]];
+const BG = [["색 지우기 (기준선)",0.8745],["U²-Net",0.9373],["IS-Net",0.9397],["BiRefNet",0.9418]];
+// 아이콘: [이름, SigLIP 확신(정답 이름 확률), 자동 채택, 사람 판정, 메모]  (outputs/final_review.csv)
+const ICONS = [["해골",0.997,1,1,""],["불꽃",0.136,0,0,"불길 대신 괴물, 배경 제거도 실패"],["방패",0.998,1,1,""],["회복",0.994,1,1,""],["내려치기",0.485,0,0,"아이콘 대신 전사 전신"],["화염구",0.967,1,1,""],["급소",0.953,1,1,""],["도발",0.185,0,1,"투구가 분명함. SigLIP이 방패로 오판"],["축복",0.986,1,1,""],["조준 사격",0.992,1,1,""]];
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COLOR = { d: () => css("--bad"), m: () => css("--warn"), n: () => "#8b8494" };
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("plot");
+const lo = 0.25, hi = 1.0;
+
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function draw(t) {
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 210, padL = 34, padB = 22, padT = 8;
+  const n = QA.length, bw = (W - padL) / n;
+  const y = v => padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo));
+  svg.replaceChildren();
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  [0.4, 0.6, 0.8, 1.0].forEach(v => {
+    svg.append(el("line", { x1: padL, x2: W, y1: y(v), y2: y(v), stroke: css("--line"), "stroke-width": 1 }));
+    svg.append(el("text", { x: padL - 6, y: y(v) + 4, "text-anchor": "end", "font-size": 11, fill: css("--muted") }, v.toFixed(1)));
+  });
+  QA.forEach(([name, v, s], i) => {
+    const x = padL + i * bw + bw * 0.15, flagged = v < t;
+    const r = el("rect", { x, y: y(v), width: bw * 0.7, height: y(lo) - y(v), rx: 2, fill: COLOR[s](), opacity: flagged ? 1 : 0.35 });
+    r.append(el("title", {}, `${name} · IoU ${v.toFixed(3)} · ${s === "d" ? "결함" : s === "m" ? "경미" : "결함 없음"}${flagged ? " · 검토 필요" : ""}`));
+    svg.append(r);
+  });
+  svg.append(el("line", { x1: padL, x2: W, y1: y(t), y2: y(t), stroke: css("--accent"), "stroke-width": 2.5 }));
+  svg.append(el("text", { x: padL + 4, y: H - 6, "font-size": 11, fill: css("--muted") }, "IoU가 낮은 그림 → 높은 그림 (막대 하나 = 그림 한 장, 진한 막대 = 검토 필요)"));
+}
+
+function update() {
+  const t = +document.getElementById("th").value;
+  document.getElementById("thOut").textContent = t.toFixed(2);
+  const flagged = QA.filter(q => q[1] < t), caught = flagged.filter(q => q[2] === "d").length;
+  const total = QA.filter(q => q[2] === "d").length, fp = flagged.length - caught;
+  document.getElementById("rFlag").textContent = flagged.length;
+  document.getElementById("rCaught").textContent = `${caught} / ${total}`;
+  document.getElementById("rCaught").style.color = caught === total ? css("--good") : css("--text");
+  document.getElementById("rFalse").textContent = fp;
+  document.getElementById("rPrec").textContent = flagged.length ? (caught / flagged.length).toFixed(2) : "–";
+  const chips = document.getElementById("chips"); chips.replaceChildren();
+  flagged.forEach(([name, , s]) => {
+    const c = document.createElement("span");
+    c.className = "chip flag" + (s === "d" ? " def" : ""); c.textContent = name; chips.append(c);
+  });
+  draw(t);
+}
+
+function bars() {
+  const box = document.getElementById("bars"), min = 0.8, max = 1.0;
+  const pct = v => Math.max(0, (v - min) / (max - min) * 100);
+  BG.forEach(([name, v], i) => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<span>${name}</span><div class="track"><div class="fill${i === BG.length - 1 ? " best" : ""}" style="width:${pct(v)}%"></div><div class="goal" style="left:${pct(0.95)}%"></div></div><span class="num" style="font-variant-numeric:tabular-nums">${v.toFixed(3)}</span>`;
+    box.append(row);
+  });
+}
+
+function icons() {
+  const tb = document.getElementById("iconRows");
+  ICONS.forEach(([name, p, auto, ok, note]) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${name}</td><td class="num">${p.toFixed(3)}</td><td>${auto ? "O" : '<span class="part">검토</span>'}</td><td>${ok ? '<span class="pass">쓸 수 있음</span>' : '<span class="fail">불량</span>'}</td><td style="color:var(--muted)">${note}</td>`;
+    tb.append(tr);
+  });
+}
+
+document.getElementById("th").addEventListener("input", update);
+window.addEventListener("resize", () => draw(+document.getElementById("th").value));
+bars(); icons(); update();
+</script>
+</body>
+</html>
